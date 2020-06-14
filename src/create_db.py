@@ -8,7 +8,9 @@ def create_db(app):
 			id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
 			title           TEXT NOT NULL, 
 			parent_category INTEGER, 
-			FOREIGN KEY(parent_category) REFERENCES category(id) 
+			user_id         INTEGER NOT NULL,
+			FOREIGN KEY(parent_category) REFERENCES category(id),
+			FOREIGN KEY(user_id) REFERENCES user(id) 
 			); 
 			
 			CREATE TABLE user (
