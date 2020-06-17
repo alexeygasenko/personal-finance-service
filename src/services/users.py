@@ -3,10 +3,28 @@ from werkzeug.security import generate_password_hash
 from .base import BaseService
 from .exceptions import (
     ConflictError,
+    DoesNotExistError,
 )
 
 
 class UsersService(BaseService):
+    def get_user(self, user_id):
+        cur = self.connection.execute(
+            'SELECT id, email, first_name, last_name '
+            'FROM user '
+            'WHERE id = ?',
+            (user_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise DoesNotExistError(f'User with ID "{user_id}" does not exist.')
+        user = {
+            key: row[key]
+            for key in row.keys()
+            if row[key] is not None
+        }
+        return user
+
     def create_user(self, user_data):
         cur = self.connection.execute(
             'SELECT id '
