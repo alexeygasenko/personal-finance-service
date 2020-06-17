@@ -14,6 +14,9 @@ bp = Blueprint('auth', __name__)
 
 @bp.route('/login', methods=['POST'])
 def login():
+    """
+    Авторизация пользователя в сессии
+    """
     request_json = request.json
     email = request_json['email']
     password = request_json['password']
@@ -38,5 +41,8 @@ def login():
 
 @bp.route('/logout', methods=['POST'])
 def logout():
+    """
+    Выход пользователя из сессии
+    """
     session.clear()
     return '', HTTPStatus.OK

@@ -9,6 +9,11 @@ from .exceptions import (
 
 class UsersService(BaseService):
     def get_user(self, user_id):
+        """
+        Получение пользователя по его id
+        :param user_id: id пользователя
+        :return: Информация о пользователе (id, email и имя)
+        """
         cur = self.connection.execute(
             'SELECT id, email, first_name, last_name '
             'FROM user '
@@ -26,6 +31,11 @@ class UsersService(BaseService):
         return user
 
     def create_user(self, user_data):
+        """
+        Создание пользователя в базе данных
+        :param user_data: Информация о пользователе (email, имя, пароль)
+        :return: Информация о пользователе (id, email и имя)
+        """
         cur = self.connection.execute(
             'SELECT id '
             'FROM user '
@@ -43,6 +53,11 @@ class UsersService(BaseService):
         return user_data
 
     def _create_user(self, user_data):
+        """
+        Функция для записи нового пользователя в базу данных
+        :param user_data: Информация о пользователе (email, имя, пароль)
+        :return: id созданного пользователя
+        """
         user_data['password'] = generate_password_hash(user_data['password'])
         cur = self.connection.execute(
             'INSERT INTO user (email, password, first_name, last_name) '

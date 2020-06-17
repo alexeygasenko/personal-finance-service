@@ -17,6 +17,10 @@ from services.exceptions import (
 
 class UsersView(MethodView):
     def post(self):
+        """
+        Создание пользователя в базе данных
+        :return: Информация о пользователе (id, email и имя)
+        """
         with db.connection as connection:
             service = UsersService(connection)
             try:

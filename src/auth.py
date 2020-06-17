@@ -9,6 +9,11 @@ from services.exceptions import DoesNotExistError
 
 
 def auth_required(*, pass_user=False):
+    """
+    Декоратор для проверки авторизованности пользователя
+    :param pass_user: Флаг, обозначающий, нужно ли передать информацию о пользователе
+                      внутрь функции, на которую навешан декоратор
+    """
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(*args, **kwargs):
