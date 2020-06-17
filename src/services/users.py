@@ -22,7 +22,7 @@ class UsersService(BaseService):
         )
         row = cur.fetchone()
         if row is None:
-            raise DoesNotExistError(f'User with ID "{user_id}" does not exist.')
+            raise DoesNotExistError(f'User with ID {user_id} does not exist.')
         user = {
             key: row[key]
             for key in row.keys()
@@ -45,7 +45,7 @@ class UsersService(BaseService):
         row = cur.fetchone()
 
         if row is not None:
-            raise ConflictError(f'User with email "{user_data["email"]}" already exists.')
+            raise ConflictError(f'User with email {user_data["email"]} already exists.')
 
         user_id = self._create_user(user_data)
         user_data['id'] = user_id
