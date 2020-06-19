@@ -17,6 +17,11 @@ from services.exceptions import ServiceError
 class CategoriesView(MethodView):
     @auth_required(pass_user=True)
     def get(self, user):
+        """
+        Получение категорий пользователя
+        :param user: Пользователь
+        :return: Категории
+        """
         with db.connection as connection:
             service = CategoriesService(connection)
             categories = service.get_categories(user['id'])
@@ -24,6 +29,11 @@ class CategoriesView(MethodView):
 
     @auth_required(pass_user=True)
     def post(self, user):
+        """
+        Добавление категории
+        :param user: Пользователь
+        :return: Созданная категория
+        """
         with db.connection as connection:
             service = CategoriesService(connection)
             try:

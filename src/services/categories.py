@@ -6,6 +6,11 @@ from .exceptions import ConflictError, DoesNotExistError, BrokenRulesError
 
 class CategoriesService(BaseService):
     def get_categories(self, user_id):
+        """
+        Получение категорий пользователя
+        :param user_id: id пользователя
+        :return: Все категории, созданные данным пользователем
+        """
         cur = self.connection.execute(
             'SELECT id, title, parent_id, user_id '
             'FROM category '
@@ -18,6 +23,11 @@ class CategoriesService(BaseService):
         return categories
 
     def _get_category_path(self, category_id):
+        """
+        Получение пути внутри дерева для категории
+        :param category_id: id категории
+        :return tree_path: Путь до категории в дереве категорий
+        """
         cur = self.connection.execute(
             'SELECT tree_path '
             'FROM category '
@@ -31,6 +41,12 @@ class CategoriesService(BaseService):
         return tree_path
 
     def create_category(self, user_id, category_data):
+        """
+        Создание категории
+        :param user_id: id пользователя
+        :param category_data: Информация о добавляемой категории (имя, id родителя (если есть))
+        :return:
+        """
         category_id = self._create_category(user_id, category_data)
         category_data['id'] = category_id
         parent_path = None
@@ -54,6 +70,12 @@ class CategoriesService(BaseService):
         return category_data
 
     def _create_category(self, user_id, category_data):
+        """
+        Добавление категории в базу данных
+        :param user_id: id пользователя
+        :param category_data: Информация о добавляемой категории
+        :return:
+        """
         try:
             cur = self.connection.execute(
                 'INSERT INTO category(title, parent_id, user_id, tree_path) '
@@ -72,6 +94,11 @@ class CategoriesService(BaseService):
         return category_id
 
     def _update_category_path(self, category_id, path):
+        """
+        Обновление пути для категории внутри дерева категорий
+        :param category_id: id категории
+        :param path: Новый путь
+        """
         self.connection.execute(
             'UPDATE category '
             'SET tree_path = ? '
