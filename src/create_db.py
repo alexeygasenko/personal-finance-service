@@ -7,9 +7,10 @@ def create_db(app):
 			CREATE TABLE category (
 			id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
 			title           TEXT NOT NULL, 
-			parent_category INTEGER, 
+			parent_id 		INTEGER, 
 			user_id         INTEGER NOT NULL,
-			FOREIGN KEY(parent_category) REFERENCES category(id),
+			tree_path		TEXT NOT NULL,
+			FOREIGN KEY(parent_id) REFERENCES category(id),
 			FOREIGN KEY(user_id) REFERENCES user(id) 
 			); 
 			
