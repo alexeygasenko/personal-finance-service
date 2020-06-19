@@ -10,6 +10,7 @@ def create_db(app):
 			parent_id 		INTEGER, 
 			user_id         INTEGER NOT NULL,
 			tree_path		TEXT NOT NULL,
+			UNIQUE(title, user_id), 
 			FOREIGN KEY(parent_id) REFERENCES category(id),
 			FOREIGN KEY(user_id) REFERENCES user(id) 
 			); 

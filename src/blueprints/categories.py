@@ -11,6 +11,7 @@ from flask.views import MethodView
 from database import db
 from auth import auth_required
 from services.categories import CategoriesService
+from services.exceptions import ServiceError
 
 
 class CategoriesView(MethodView):
@@ -22,8 +23,14 @@ class CategoriesView(MethodView):
             return jsonify(categories)
 
     @auth_required(pass_user=True)
-    def post(self):
-        pass
+    def post(self, user):
+        with db.connection as connection:
+            service = CategoriesService(connection)
+            try:
+                category = service.create_category(user['id'], request.json)
+            except ServiceError as e:
+                return e.error, e.code
+            return category, HTTPStatus.CREATED
 
 
 class CategoryView(MethodView):
