@@ -22,10 +22,10 @@ def create_db(app):
 			email      TEXT NOT NULL UNIQUE, 
 			password   TEXT NOT NULL 
 			);
-			 
+			
 			CREATE TABLE operation (
 			id             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
-			type           NUMERIC NOT NULL, 
+			type           TEXT NOT NULL, 
 			amount         INTEGER NOT NULL, 
 			description    TEXT, 
 			category_id    INTEGER, 
@@ -33,7 +33,7 @@ def create_db(app):
 			operation_date TEXT NOT NULL, 
 			user_id        INTEGER NOT NULL, 
 			FOREIGN KEY(user_id) REFERENCES user(id), 
-			FOREIGN KEY(category_id) REFERENCES category(id)
+			FOREIGN KEY(category_id) REFERENCES category(id) ON DELETE SET NULL
 			); 
 		""")
 		connection.commit()

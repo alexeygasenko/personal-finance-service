@@ -24,6 +24,9 @@ class SQLiteDB:
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
         )
         self._connection.row_factory = sqlite3.Row
+        self._connection.execute(
+            'PRAGMA foreign_keys = ON'
+        )
 
     def _disconnect(self, exception=None):
         if self._connection is not None:

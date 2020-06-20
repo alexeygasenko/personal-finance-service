@@ -45,12 +45,33 @@ class CategoriesView(MethodView):
 
 class CategoryView(MethodView):
     @auth_required(pass_user=True)
-    def patch(self):
-        pass
+    def patch(self, category_id, user):
+        """
+        Редактирование категории
+        :param category_id: id категории
+        :param user: Пользователь
+        :return: Измененная категория
+        """
+        with db.connection as connection:
+            service = CategoriesService(connection)
+            if not service.is_owner(user['id'], category_id):
+                return '', HTTPStatus.FORBIDDEN
+            category = service.update_category(category_id, request.json)
+            return category, HTTPStatus.OK
 
     @auth_required(pass_user=True)
-    def delete(self):
-        pass
+    def delete(self, category_id, user):
+        """
+        Удаление категории и её потомков
+        :param category_id: id категории
+        :param user: Пользователь
+        """
+        with db.connection as connection:
+            service = CategoriesService(connection)
+            if not service.is_owner(user['id'], category_id):
+                return '', HTTPStatus.FORBIDDEN
+            service.delete_category(category_id)
+            return '', HTTPStatus.NO_CONTENT
 
 
 bp = Blueprint('categories', __name__)
