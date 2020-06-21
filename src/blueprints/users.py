@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from flask import (
     Blueprint,
-    jsonify,
     request,
 )
 
@@ -26,10 +25,8 @@ class UsersView(MethodView):
             try:
                 user = service.create_user(request.json)
             except ServiceError as e:
-                connection.rollback()
                 return e.error, e.code
             else:
-                connection.commit()
                 return user, HTTPStatus.CREATED
 
 

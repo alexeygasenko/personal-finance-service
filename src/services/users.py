@@ -1,3 +1,5 @@
+import sqlite3
+
 from werkzeug.security import generate_password_hash
 
 from .base import BaseService
@@ -36,17 +38,6 @@ class UsersService(BaseService):
         :param user_data: Информация о пользователе (email, имя, пароль)
         :return: Информация о пользователе (id, email и имя)
         """
-        cur = self.connection.execute(
-            'SELECT id '
-            'FROM user '
-            'WHERE email = ?',
-            (user_data['email'],),
-        )
-        row = cur.fetchone()
-
-        if row is not None:
-            raise ConflictError(f'User with email {user_data["email"]} already exists.')
-
         user_id = self._create_user(user_data)
         user_data['id'] = user_id
         user_data.pop('password')
@@ -59,15 +50,19 @@ class UsersService(BaseService):
         :return: id созданного пользователя
         """
         user_data['password'] = generate_password_hash(user_data['password'])
-        cur = self.connection.execute(
-            'INSERT INTO user (email, password, first_name, last_name) '
-            'VALUES (?, ?, ?, ?)',
-            (
-                user_data['email'],
-                user_data['password'],
-                user_data['first_name'],
-                user_data['last_name'],
-            ),
-        )
+        try:
+            cur = self.connection.execute(
+                'INSERT INTO user (email, password, first_name, last_name) '
+                'VALUES (?, ?, ?, ?)',
+                (
+                    user_data['email'],
+                    user_data['password'],
+                    user_data['first_name'],
+                    user_data['last_name'],
+                ),
+            )
+        except sqlite3.IntegrityError:
+            raise ConflictError(f'User with email {user_data["email"]} already exists.') from None
         user_id = cur.lastrowid
+        self.connection.commit()
         return user_id
