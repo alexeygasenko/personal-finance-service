@@ -2,6 +2,7 @@ from flask import Flask
 import os
 
 from blueprints.auth import bp as auth_bp
+from blueprints.categories import bp as categories_bp
 from blueprints.users import bp as users_bp
 from create_db import create_db
 from database import db
@@ -14,5 +15,6 @@ def create_app():
 		create_db(app)
 	db.init_app(app)
 	app.register_blueprint(auth_bp, url_prefix='/auth')
+	app.register_blueprint(categories_bp, url_prefix='/categories')
 	app.register_blueprint(users_bp, url_prefix='/users')
 	return app
