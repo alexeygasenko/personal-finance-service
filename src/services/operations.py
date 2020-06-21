@@ -2,15 +2,17 @@ from datetime import datetime
 from .base import BaseService
 from .exceptions import (
     DoesNotExistError,
-    ForbiddenError,
+    BrokenRulesError
 )
-from flask import session
+
 
 
 class OperationsService(BaseService):
-    def create_operation(self, operation_data):
+    def create_operation(self, operation_data, user):
         # добавить проверку категорий
-        operation_data['user_id'] = session.get('user_id')
+        operation_data['user_id'] = user['id']
+        if not operation_data.get('type') or not operation_data.get('amount'):
+            raise BrokenRulesError(f'Incomplete request.')
         operation_data['record_date'] = datetime.now(tz=None).isoformat(sep='T')
         if operation_data.get('operation_date') is None:
             operation_data['operation_date'] = datetime.now(tz=None).isoformat(sep='T')
@@ -52,13 +54,11 @@ class OperationsService(BaseService):
         }
         return operation
 
-    def patch_operation(self, operation_data, operation_id):
+    def update_operation(self, operation_data, operation_id):
         try:
             operation = OperationsService.get_operation(self, operation_id)
         except:
             raise DoesNotExistError(f'Operation with ID {operation_id} does not exist.')
-        if session.get('user_id') != operation['user_id']:
-            raise ForbiddenError(f'No access rights to this operation.')
         # проверить категорию
         if operation_data.get('type'):
             operation['type'] = operation_data.get('type')
@@ -84,14 +84,21 @@ class OperationsService(BaseService):
              operation = OperationsService.get_operation(self, operation_id)
         except:
             raise DoesNotExistError(f'Operation with ID {operation_id} does not exist.')
-        if session.get('user_id') != operation['user_id']:
-            raise ForbiddenError(f'No access rights to this operation.')
         self.connection.execute(
             'DELETE FROM operation '
             'WHERE id = ?',
             (operation_id,),
         )
-        return True
+
+    def is_owner(self, user, operation_id):
+        cur = self.connection.execute(
+            'SELECT user_id '
+            'FROM operation '
+            'WHERE id = ?',
+            (operation_id,),
+        )
+        row = cur.fetchone()
+        return row is not None and (row['user_id']) == user['id']
 
 
 

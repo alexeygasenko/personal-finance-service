@@ -23,6 +23,3 @@ class BrokenRulesError(ServiceError):
 class UnauthorizedError(ServiceError):
     code = 401
 
-
-class ForbiddenError(ServiceError):
-    code = 403

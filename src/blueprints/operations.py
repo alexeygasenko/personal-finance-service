@@ -16,12 +16,12 @@ from services.exceptions import (
 
 class OperationsView(MethodView):
 
-    @auth_required(pass_user=False)
-    def post(self):
+    @auth_required(pass_user=True)
+    def post(self, user):
         with db.connection as connection:
             service = OperationsService(connection)
             try:
-                operation = service.create_operation(request.json)
+                operation = service.create_operation(request.json, user)
             except ServiceError as e:
                 connection.rollback()
                 return e.error, e.code
@@ -32,12 +32,14 @@ class OperationsView(MethodView):
 
 class OperationView(MethodView):
  
-    @auth_required(pass_user=False)
-    def patch(self, operation_id):
+    @auth_required(pass_user=True)
+    def patch(self, operation_id, user):
         with db.connection as connection:
             service = OperationsService(connection)
+            if not service.is_owner(user, operation_id):
+                return '', HTTPStatus.FORBIDDEN
             try:
-                operation = service.patch_operation(request.json, operation_id)
+                operation = service.update_operation(request.json, operation_id)
             except ServiceError as e:
                 connection.rollback()
                 return e.error, e.code
@@ -45,10 +47,12 @@ class OperationView(MethodView):
                 connection.commit()
                 return json.dumps(operation), HTTPStatus.OK
 
-    @auth_required(pass_user=False)
-    def delete(self, operation_id):
+    @auth_required(pass_user=True)
+    def delete(self, operation_id, user):
         with db.connection as connection:
             service = OperationsService(connection)
+            if not service.is_owner(user, operation_id):
+                return '', HTTPStatus.FORBIDDEN
             try:
                 service.delete_operation(operation_id)
             except ServiceError as e:
@@ -56,7 +60,7 @@ class OperationView(MethodView):
                 return e.error, e.code
             else:
                 connection.commit()
-                return '', HTTPStatus.OK
+                return '', HTTPStatus.NO_CONTENT
 
 
 bp = Blueprint('operations', __name__)
