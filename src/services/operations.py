@@ -17,8 +17,8 @@ class OperationsService(BaseService):
             with db.connection as connection:
                 service = CategoriesService(connection)
                 service.get_category_by_id(operation_data['category_id'])
-        if operation_data['type'] not in ('income', 'expences'):
-            raise BrokenRulesError(f'wrong type of operation')
+        if operation_data['type'] not in ('income', 'expenses'):
+            raise BrokenRulesError(f'Wrong type of operation')
         operation_data['record_date'] = datetime.now(tz=None).isoformat(sep='T')
         operation_data.setdefault('operation_date', datetime.now(tz=None).isoformat(sep='T'))
         operation_data.setdefault('description', None)
@@ -38,7 +38,6 @@ class OperationsService(BaseService):
         )
         operation_data['id'] = cur.lastrowid
         return operation_data
-
 
     def get_operation(self, operation_id):
         cur = self.connection.execute(
@@ -61,8 +60,8 @@ class OperationsService(BaseService):
         operation = self.get_operation(operation_id)
         if operation_data.get('type'):
             operation['type'] = operation_data.get('type')
-            if operation['type'] not in ('income', 'expences'):
-                raise BrokenRulesError(f'wrong type of operation')
+            if operation['type'] not in ('income', 'expenses'):
+                raise BrokenRulesError(f'Wrong type of operation')
 
         if operation_data.get('amount'):
             operation['amount'] = operation_data.get('amount')
@@ -101,11 +100,3 @@ class OperationsService(BaseService):
         )
         row = cur.fetchone()
         return row is not None and (row['user_id']) == user['id']
-
-
-
-
-
-
-
-
