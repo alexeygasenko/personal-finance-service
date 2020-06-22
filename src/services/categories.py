@@ -40,7 +40,7 @@ class CategoriesService(BaseService):
         tree_path = row['tree_path']
         return tree_path
 
-    def _get_category_by_id(self, category_id):
+    def get_category_by_id(self, category_id):
         """
         Полученеи категории по её id
         :param category_id: id категории
@@ -96,7 +96,7 @@ class CategoriesService(BaseService):
         """
         parent_id = category_data['parent_id']
         if parent_id is not None:
-            self._get_category_by_id(parent_id)
+            self.get_category_by_id(parent_id)
         try:
             cur = self.connection.execute(
                 'INSERT INTO category(title, parent_id, user_id, tree_path) '
@@ -151,7 +151,7 @@ class CategoriesService(BaseService):
         :return: Измененная категория
         """
         if 'parent_id' in category_data:
-            category = self._get_category_by_id(category_id)
+            category = self.get_category_by_id(category_id)
             old_parent_id = category['parent_id']
             new_parent_id = category_data['parent_id']
 
@@ -159,14 +159,14 @@ class CategoriesService(BaseService):
                 current_node = str(category_id).zfill(8)
                 old_path = category['tree_path']
                 if new_parent_id is not None:
-                    new_parent = self._get_category_by_id(new_parent_id)
+                    new_parent = self.get_category_by_id(new_parent_id)
                     new_path = new_parent['tree_path'] + '.' + current_node
                 else:
                     new_path = current_node
                 self._update_tree_path_prefix(old_path, new_path)
 
         self._update_category(category_id, **category_data)
-        category = self._get_category_by_id(category_id)
+        category = self.get_category_by_id(category_id)
         return category
 
     def _update_tree_path_prefix(self, old_prefix, new_prefix):
@@ -187,6 +187,7 @@ class CategoriesService(BaseService):
         Удаление категории и её потомков
         :param category_id: id категории
         """
+        self.get_category_by_id(category_id)
         tree_path = self._get_category_path(category_id)
         self._delete_category(tree_path)
 

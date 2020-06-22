@@ -18,3 +18,6 @@ class DoesNotExistError(ServiceError):
 
 class BrokenRulesError(ServiceError):
     code = 422
+
+
+
