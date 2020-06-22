@@ -40,7 +40,7 @@ class CategoriesService(BaseService):
         tree_path = row['tree_path']
         return tree_path
 
-    def _get_category_by_id(self, category_id):
+    def get_category_by_id(self, category_id):
         """
         Полученеи категории по её id
         :param category_id: id категории

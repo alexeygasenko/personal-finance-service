@@ -1,25 +1,28 @@
 from datetime import datetime
 from .base import BaseService
+from .categories import CategoriesService
 from .exceptions import (
     DoesNotExistError,
     BrokenRulesError
 )
-
+from database import db
 
 
 class OperationsService(BaseService):
     def create_operation(self, operation_data, user):
-        # добавить проверку категорий
         operation_data['user_id'] = user['id']
         if not operation_data.get('type') or not operation_data.get('amount'):
             raise BrokenRulesError(f'Incomplete request.')
+        if operation_data.get('category_id'):
+            with db.connection as connection:
+                service = CategoriesService(connection)
+                service.get_category_by_id(operation_data['category_id'])
+        if operation_data['type'] not in ('income', 'expences'):
+            raise BrokenRulesError(f'wrong type of operation')
         operation_data['record_date'] = datetime.now(tz=None).isoformat(sep='T')
-        if operation_data.get('operation_date') is None:
-            operation_data['operation_date'] = datetime.now(tz=None).isoformat(sep='T')
-        if operation_data.get('category_id') is None:
-            operation_data['category_id'] = None
-        if operation_data.get('description') is None:
-            operation_data['description'] = None
+        operation_data.setdefault('operation_date', datetime.now(tz=None).isoformat(sep='T'))
+        operation_data.setdefault('description', None)
+        operation_data.setdefault('category_id', None)
         cur = self.connection.execute(
             'INSERT INTO operation (type, amount, description, category_id, record_date, operation_date, user_id) '
             'VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -39,7 +42,7 @@ class OperationsService(BaseService):
 
     def get_operation(self, operation_id):
         cur = self.connection.execute(
-            'SELECT * '
+            'SELECT id, type, amount, description, category_id, record_date, operation_date, user_id '
             'FROM operation '
             'WHERE id = ?',
             (operation_id,),
@@ -55,35 +58,34 @@ class OperationsService(BaseService):
         return operation
 
     def update_operation(self, operation_data, operation_id):
-        try:
-            operation = OperationsService.get_operation(self, operation_id)
-        except:
-            raise DoesNotExistError(f'Operation with ID {operation_id} does not exist.')
-        # проверить категорию
+        operation = self.get_operation(operation_id)
         if operation_data.get('type'):
             operation['type'] = operation_data.get('type')
+            if operation['type'] not in ('income', 'expences'):
+                raise BrokenRulesError(f'wrong type of operation')
+
         if operation_data.get('amount'):
             operation['amount'] = operation_data.get('amount')
-        if operation_data.get('category_id'):
 
+        if operation_data.get('category_id'):
+            with db.connection as connection:
+                service = CategoriesService(connection)
+                service.get_category_by_id(operation_data['category_id'])
             operation['category_id'] = operation_data.get('category_id')
+
         if operation_data.get('operation_date'):
             operation['operation_date'] = operation_data.get('operation_date')
-        if operation.get('category_id') is None:
-            operation['category_id'] = None
+        operation.setdefault(operation_id, None)
         self.connection.execute(
             'UPDATE operation '
             'SET type = ?, amount = ?, category_id = ?, operation_date = ? '
             'WHERE id = ?',
             (operation['type'], operation['amount'], operation['category_id'], operation['operation_date'], operation_id,),
         )
-        return OperationsService.get_operation(self, operation_id)
+        return self.get_operation(operation_id)
 
     def delete_operation(self, operation_id):
-        try:
-             operation = OperationsService.get_operation(self, operation_id)
-        except:
-            raise DoesNotExistError(f'Operation with ID {operation_id} does not exist.')
+        self.get_operation(operation_id)
         self.connection.execute(
             'DELETE FROM operation '
             'WHERE id = ?',

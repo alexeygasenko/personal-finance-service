@@ -20,6 +20,4 @@ class BrokenRulesError(ServiceError):
     code = 422
 
 
-class UnauthorizedError(ServiceError):
-    code = 401
 
