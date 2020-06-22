@@ -138,7 +138,6 @@ class CategoriesService(BaseService):
             (user_id, category_id,),
         )
         row = cur.fetchone()
-        print(row['is_owner'])
         return row is None or bool(row['is_owner'])
 
     def update_category(self, category_id, category_data):
@@ -185,6 +184,7 @@ class CategoriesService(BaseService):
         Удаление категории и её потомков
         :param category_id: id категории
         """
+        self._get_category_by_id(category_id)
         tree_path = self._get_category_path(category_id)
         self._delete_category(tree_path)
 
