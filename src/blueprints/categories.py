@@ -56,7 +56,10 @@ class CategoryView(MethodView):
             service = CategoriesService(connection)
             if not service.is_owner(user['id'], category_id):
                 return '', HTTPStatus.FORBIDDEN
-            category = service.update_category(category_id, request.json)
+            try:
+                category = service.update_category(category_id, request.json)
+            except ServiceError as e:
+                return e.error, e.code
             return category, HTTPStatus.OK
 
     @auth_required(pass_user=True)
@@ -70,7 +73,10 @@ class CategoryView(MethodView):
             service = CategoriesService(connection)
             if not service.is_owner(user['id'], category_id):
                 return '', HTTPStatus.FORBIDDEN
-            service.delete_category(category_id)
+            try:
+                service.delete_category(category_id)
+            except ServiceError as e:
+                return e.error, e.code
             return '', HTTPStatus.NO_CONTENT
 
 
