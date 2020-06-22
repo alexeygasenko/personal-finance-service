@@ -94,6 +94,9 @@ class CategoriesService(BaseService):
         :param category_data: Информация о добавляемой категории
         :return:
         """
+        parent_id = category_data['parent_id']
+        if parent_id is not None:
+            self._get_category_by_id(parent_id)
         try:
             cur = self.connection.execute(
                 'INSERT INTO category(title, parent_id, user_id, tree_path) '
