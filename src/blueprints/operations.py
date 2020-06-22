@@ -1,8 +1,8 @@
 from http import HTTPStatus
-import json
 from flask import (
     Blueprint,
     request,
+    jsonify,
 )
 
 from flask.views import MethodView
@@ -45,7 +45,7 @@ class OperationView(MethodView):
                 return e.error, e.code
             else:
                 connection.commit()
-                return json.dumps(operation), HTTPStatus.OK
+                return jsonify(operation), HTTPStatus.OK
 
     @auth_required(pass_user=True)
     def delete(self, operation_id, user):
