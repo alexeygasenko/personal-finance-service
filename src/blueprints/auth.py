@@ -31,7 +31,7 @@ def login():
         row = cur.fetchone()
 
         if row is None:
-            return '', HTTPStatus.FORBIDDEN
+            return '', HTTPStatus.UNPROCESSABLE_ENTITY
         if not check_password_hash(row['password'], password):
             return '', HTTPStatus.FORBIDDEN
 

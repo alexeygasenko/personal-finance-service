@@ -11,14 +11,15 @@ class CategoriesService(BaseService):
         :param user_id: id пользователя
         :return: Все категории, созданные данным пользователем
         """
-        cur = self.connection.execute(
-            'SELECT id, title, parent_id, user_id '
-            'FROM category '
-            'WHERE user_id = ? '
-            'ORDER BY tree_path',
-            (user_id,),
-        )
-        rows = cur.fetchall()
+        rows = self.select_rows(table_name='category',
+                                where='user_id',
+                                equals_to=user_id,
+                                order_by='tree_path',
+                                id='id',
+                                title='title',
+                                parent_id='parent_id',
+                                user_id='user_id'
+                                )
         categories = [dict(row) for row in rows]
         return categories
 
@@ -28,13 +29,11 @@ class CategoriesService(BaseService):
         :param category_id: id категории
         :return tree_path: Путь до категории в дереве категорий
         """
-        cur = self.connection.execute(
-            'SELECT tree_path '
-            'FROM category '
-            'WHERE id = ?',
-            (category_id,),
-        )
-        row = cur.fetchone()
+        row = self.select_row(table_name='category',
+                              where='id',
+                              equals_to=category_id,
+                              tree_path='tree_path'
+                              )
         if row is None:
             raise DoesNotExistError(f'Category with id {category_id} does not exist.')
         tree_path = row['tree_path']
@@ -42,17 +41,19 @@ class CategoriesService(BaseService):
 
     def get_category_by_id(self, category_id):
         """
-        Полученеи категории по её id
+        Получение категории по её id
         :param category_id: id категории
         :return: Категория
         """
-        cur = self.connection.execute(
-            'SELECT id, title, parent_id, user_id, tree_path '
-            'FROM category '
-            'WHERE id = ?',
-            (category_id,),
-        )
-        row = cur.fetchone()
+        row = self.select_row(table_name='category',
+                              where='id',
+                              equals_to=category_id,
+                              id='id',
+                              title='title',
+                              parent_id='parent_id',
+                              user_id='user_id',
+                              tree_path='tree_path'
+                              )
         if row is None:
             raise DoesNotExistError(f'Category with id {category_id} does not exist.')
         category = dict(row)
@@ -98,19 +99,15 @@ class CategoriesService(BaseService):
         if parent_id is not None:
             self.get_category_by_id(parent_id)
         try:
-            cur = self.connection.execute(
-                'INSERT INTO category(title, parent_id, user_id, tree_path) '
-                'VALUES (?, ?, ?, ?)',
-                (
-                    category_data['title'],
-                    category_data.get('parent_id'),
-                    user_id,
-                    '',
-                ),
+            category_id = self.insert_row(
+                'category',
+                title=category_data['title'],
+                parent_id=category_data.get('parent_id'),
+                user_id=user_id,
+                tree_path=''
             )
         except sqlite3.IntegrityError:
             raise ConflictError(f'Category with name {category_data["title"]} already exists for that user.')
-        category_id = cur.lastrowid
         self.connection.commit()
         return category_id
 
@@ -122,9 +119,12 @@ class CategoriesService(BaseService):
         """
         if not category_data:
             return
-        category_params = ', '.join(f'{key} = ?' for key in category_data)
-        category_query = f'UPDATE category SET {category_params} WHERE id = ?'
-        self.connection.execute(category_query, (*category_data.values(), category_id))
+        self.update_row(
+            table_name='category',
+            where='id',
+            equals_to=category_id,
+            **category_data
+        )
 
     def is_owner(self, user_id, category_id):
         """
@@ -187,7 +187,6 @@ class CategoriesService(BaseService):
         Удаление категории и её потомков
         :param category_id: id категории
         """
-        self.get_category_by_id(category_id)
         tree_path = self._get_category_path(category_id)
         self._delete_category(tree_path)
 
