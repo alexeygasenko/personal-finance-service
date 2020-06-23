@@ -110,7 +110,7 @@ class CategoriesService(BaseService):
             self.get_category_by_id(parent_id)
         try:
             category_id = self.insert_row(
-                'category',
+                table_name='category',
                 title=category_data['title'],
                 parent_id=category_data.get('parent_id'),
                 user_id=user_id,
