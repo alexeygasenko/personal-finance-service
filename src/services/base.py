@@ -17,11 +17,9 @@ class BaseService:
     @classmethod
     def make_select_query(cls, fields, table_name, where, order_by):
         fields_to_select = cls.make_select_fields(fields)
-        select_query = f'SELECT {fields_to_select} FROM {table_name} ' \
-                       f'WHERE {where} = ?'
+        select_query = f'SELECT {fields_to_select} FROM {table_name} WHERE {where} = ?'
         if order_by:
             select_query += f' ORDER BY {order_by}'
-        print(select_query)
         return select_query
 
     def select_row(self, table_name, where, equals_to, order_by=False, **fields):

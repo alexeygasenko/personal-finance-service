@@ -16,13 +16,15 @@ class UsersService(BaseService):
         :param user_id: id пользователя
         :return: Информация о пользователе (id, email и имя)
         """
-        cur = self.connection.execute(
-            'SELECT id, email, first_name, last_name '
-            'FROM user '
-            'WHERE id = ?',
-            (user_id,),
+        row = self.select_row(
+            table_name='user',
+            where='id',
+            equals_to=user_id,
+            id='id',
+            email='email',
+            first_name='first_name',
+            last_name='last_name'
         )
-        row = cur.fetchone()
         if row is None:
             raise DoesNotExistError(f'User with ID {user_id} does not exist.')
         user = {
@@ -30,6 +32,7 @@ class UsersService(BaseService):
             for key in row.keys()
             if row[key] is not None
         }
+        self.connection.commit()
         return user
 
     def create_user(self, user_data):
@@ -51,18 +54,14 @@ class UsersService(BaseService):
         """
         user_data['password'] = generate_password_hash(user_data['password'])
         try:
-            cur = self.connection.execute(
-                'INSERT INTO user (email, password, first_name, last_name) '
-                'VALUES (?, ?, ?, ?)',
-                (
-                    user_data['email'],
-                    user_data['password'],
-                    user_data['first_name'],
-                    user_data['last_name'],
-                ),
+            user_id = self.insert_row(
+                table_name='user',
+                email=user_data['email'],
+                password=user_data['password'],
+                first_name=user_data['first_name'],
+                last_name=user_data['last_name']
             )
         except sqlite3.IntegrityError:
             raise ConflictError(f'User with email {user_data["email"]} already exists.') from None
-        user_id = cur.lastrowid
         self.connection.commit()
         return user_id
