@@ -11,15 +11,16 @@ class CategoriesService(BaseService):
         :param user_id: id пользователя
         :return: Все категории, созданные данным пользователем
         """
-        rows = self.select_rows(table_name='category',
-                                where='user_id',
-                                equals_to=user_id,
-                                order_by='tree_path',
-                                id='id',
-                                title='title',
-                                parent_id='parent_id',
-                                user_id='user_id'
-                                )
+        rows = self.select_rows(
+            table_name='category',
+            where='user_id',
+            equals_to=user_id,
+            order_by='tree_path',
+            id='id',
+            title='title',
+            parent_id='parent_id',
+            user_id='user_id'
+        )
         categories = [dict(row) for row in rows]
         return categories
 
@@ -29,11 +30,12 @@ class CategoriesService(BaseService):
         :param category_id: id категории
         :return tree_path: Путь до категории в дереве категорий
         """
-        row = self.select_row(table_name='category',
-                              where='id',
-                              equals_to=category_id,
-                              tree_path='tree_path'
-                              )
+        row = self.select_row(
+            table_name='category',
+            where='id',
+            equals_to=category_id,
+            tree_path='tree_path'
+        )
         if row is None:
             raise DoesNotExistError(f'Category with id {category_id} does not exist.')
         tree_path = row['tree_path']
@@ -45,15 +47,16 @@ class CategoriesService(BaseService):
         :param category_id: id категории
         :return: Категория
         """
-        row = self.select_row(table_name='category',
-                              where='id',
-                              equals_to=category_id,
-                              id='id',
-                              title='title',
-                              parent_id='parent_id',
-                              user_id='user_id',
-                              tree_path='tree_path'
-                              )
+        row = self.select_row(
+            table_name='category',
+            where='id',
+            equals_to=category_id,
+            id='id',
+            title='title',
+            parent_id='parent_id',
+            user_id='user_id',
+            tree_path='tree_path'
+        )
         if row is None:
             raise DoesNotExistError(f'Category with id {category_id} does not exist.')
         category = dict(row)
@@ -77,6 +80,13 @@ class CategoriesService(BaseService):
                 self.connection.rollback()
                 raise BrokenRulesError(f'Parent category does not exist.')
 
+        """
+        tree_path нужен для того, чтобы хранить путь от корневой категории до текущей в виде дерева.
+        Это понадобится при выводе отчета и при лексикографической сортировке категорий внутри отчета.
+        Нули дописываем вперед именно из-за лексикографической сортировки, иначе при сравнении
+        строка '15' будет меньше строки '5'.
+        8 нулей потому, что суммарно на всех пользователей категорий будет достаточно много, поэтому взял с запасом.
+        """
         current_node = str(category_id).zfill(8)
         if parent_path is None:
             path = current_node
