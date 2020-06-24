@@ -9,46 +9,73 @@ from database import db
 
 
 class OperationsService(BaseService):
+    def _create_operation(self, operation_data):
+        """
+        Создание операции
+
+        :param operation_data: данные об операции
+        :return: id созданной операции
+        """
+        operation_id = self.insert_row(
+            table_name='operation',
+            **operation_data
+        )
+        return operation_id
+
     def create_operation(self, operation_data, user):
+        """
+        Создание операции
+
+        :param user: id пользователя, добавляющего данную операцию
+        :param operation_data: данные об операции(тип, сумма, описание(если есть),
+         id категории(если есть), дата)
+        :return: Созданная операция
+        """
+
         operation_data['user_id'] = user['id']
+
         if not operation_data.get('type') or not operation_data.get('amount'):
             raise BrokenRulesError(f'Incomplete request.')
-        if operation_data.get('category_id'):
+
+        if operation_data.setdefault('category_id', None) is not None:
             with db.connection as connection:
                 service = CategoriesService(connection)
                 service.get_category_by_id(operation_data['category_id'])
+
         if operation_data['type'] not in ('income', 'expenses'):
             raise BrokenRulesError(f'Wrong type of operation')
+
         operation_data['record_date'] = datetime.now(tz=None).isoformat(sep='T')
-        operation_data.setdefault('operation_date', datetime.now(tz=None).isoformat(sep='T'))
+        operation_data.setdefault('operation_date', operation_data['record_date'])
         operation_data.setdefault('description', None)
-        operation_data.setdefault('category_id', None)
-        cur = self.connection.execute(
-            'INSERT INTO operation (type, amount, description, category_id, record_date, operation_date, user_id) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (
-                operation_data['type'],
-                operation_data['amount'],
-                operation_data['description'],
-                operation_data['category_id'],
-                operation_data['record_date'],
-                operation_data['operation_date'],
-                operation_data['user_id'],
-            ),
-        )
-        operation_data['id'] = cur.lastrowid
+
+        operation_data['id'] = self._create_operation(operation_data)
         return operation_data
 
     def get_operation(self, operation_id):
-        cur = self.connection.execute(
-            'SELECT id, type, amount, description, category_id, record_date, operation_date, user_id '
-            'FROM operation '
-            'WHERE id = ?',
-            (operation_id,),
+        """
+        Получение операции по её id
+
+        :param operation_id: id операии
+        :return: Операция
+        """
+
+        fields = [
+            'id',
+            'type',
+            'amount',
+            'description',
+            'category_id',
+            'record_date',
+            'operation_date',
+            'user_id'
+        ]
+        row = self.select_row(
+            table_name='operation',
+            where='id',
+            equals_to=operation_id,
+            fields=fields
         )
-        row = cur.fetchone()
-        if row is None:
-            raise DoesNotExistError(f'Operation with ID {operation_id} does not exist.')
         operation = {
             key: row[key]
             for key in row.keys()
@@ -57,33 +84,36 @@ class OperationsService(BaseService):
         return operation
 
     def update_operation(self, operation_data, operation_id):
-        operation = self.get_operation(operation_id)
-        if operation_data.get('type'):
-            operation['type'] = operation_data.get('type')
-            if operation['type'] not in ('income', 'expenses'):
-                raise BrokenRulesError(f'Wrong type of operation')
+        """
+        Обновляет данные у существующей операции
 
-        if operation_data.get('amount'):
-            operation['amount'] = operation_data.get('amount')
+        :param operation_data: информация, на которую будет заменены поля, которые были отправлены
+         (тип(если есть), сумма(если есть), описание(если есть), id категории(если есть), дата
+         произведения операции)
+        :param operation_id: id изменяемой операции
+
+        :return: Изменённая операция
+        """
+        if operation_data.get('type') not in ('income', 'expenses', None):
+            raise BrokenRulesError(f'Wrong type of operation')
 
         if operation_data.get('category_id'):
-            with db.connection as connection:
-                service = CategoriesService(connection)
-                service.get_category_by_id(operation_data['category_id'])
-            operation['category_id'] = operation_data.get('category_id')
-
-        if operation_data.get('operation_date'):
-            operation['operation_date'] = operation_data.get('operation_date')
-        operation.setdefault(operation_id, None)
-        self.connection.execute(
-            'UPDATE operation '
-            'SET type = ?, amount = ?, category_id = ?, operation_date = ? '
-            'WHERE id = ?',
-            (operation['type'], operation['amount'], operation['category_id'], operation['operation_date'], operation_id,),
+            service_category = CategoriesService(self.connection)
+            service_category.get_category_by_id(operation_data['category_id'])
+        self.update_row(
+            table_name='operation',
+            where='id',
+            equals_to=operation_id,
+            **operation_data
         )
         return self.get_operation(operation_id)
 
     def delete_operation(self, operation_id):
+        """
+        Удаляет операцию
+
+        :param operation_id: id удаляемой операции
+        """
         self.get_operation(operation_id)
         self.connection.execute(
             'DELETE FROM operation '
@@ -91,7 +121,14 @@ class OperationsService(BaseService):
             (operation_id,),
         )
 
-    def is_owner(self, user, operation_id):
+    def is_owner(self, user_id, operation_id):
+        """
+        Проверяет является ли пользователь создателем операции
+
+        :param user_id: id пользователя
+        :param operation_id: id операции
+        :return: true/false является или нет
+        """
         cur = self.connection.execute(
             'SELECT user_id '
             'FROM operation '
@@ -99,4 +136,4 @@ class OperationsService(BaseService):
             (operation_id,),
         )
         row = cur.fetchone()
-        return row is not None and (row['user_id']) == user['id']
+        return row is not None and (row['user_id']) == user_id
