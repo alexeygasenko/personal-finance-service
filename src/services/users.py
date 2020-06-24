@@ -16,14 +16,12 @@ class UsersService(BaseService):
         :param user_id: id пользователя
         :return: Информация о пользователе (id, email и имя)
         """
+        fields = ['id', 'email', 'first_name', 'last_name']
         row = self.select_row(
+            fields,
             table_name='user',
             where='id',
             equals_to=user_id,
-            id='id',
-            email='email',
-            first_name='first_name',
-            last_name='last_name'
         )
         if row is None:
             raise DoesNotExistError(f'User with ID {user_id} does not exist.')
@@ -56,10 +54,7 @@ class UsersService(BaseService):
         try:
             user_id = self.insert_row(
                 table_name='user',
-                email=user_data['email'],
-                password=user_data['password'],
-                first_name=user_data['first_name'],
-                last_name=user_data['last_name']
+                **user_data
             )
         except sqlite3.IntegrityError:
             raise ConflictError(f'User with email {user_data["email"]} already exists.') from None
