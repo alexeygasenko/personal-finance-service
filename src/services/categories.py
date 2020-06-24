@@ -11,15 +11,13 @@ class CategoriesService(BaseService):
         :param user_id: id пользователя
         :return: Все категории, созданные данным пользователем
         """
+        fields = ['id', 'title', 'parent_id', 'user_id']
         rows = self.select_rows(
+            fields,
             table_name='category',
             where='user_id',
             equals_to=user_id,
             order_by='tree_path',
-            id='id',
-            title='title',
-            parent_id='parent_id',
-            user_id='user_id'
         )
         categories = [dict(row) for row in rows]
         return categories
@@ -30,11 +28,12 @@ class CategoriesService(BaseService):
         :param category_id: id категории
         :return tree_path: Путь до категории в дереве категорий
         """
+        fields = ['tree_path']
         row = self.select_row(
+            fields,
             table_name='category',
             where='id',
             equals_to=category_id,
-            tree_path='tree_path'
         )
         if row is None:
             raise DoesNotExistError(f'Category with id {category_id} does not exist.')
@@ -47,15 +46,12 @@ class CategoriesService(BaseService):
         :param category_id: id категории
         :return: Категория
         """
+        fields = ['id', 'title', 'parent_id', 'user_id', 'tree_path']
         row = self.select_row(
+            fields,
             table_name='category',
             where='id',
             equals_to=category_id,
-            id='id',
-            title='title',
-            parent_id='parent_id',
-            user_id='user_id',
-            tree_path='tree_path'
         )
         if row is None:
             raise DoesNotExistError(f'Category with id {category_id} does not exist.')
@@ -110,7 +106,7 @@ class CategoriesService(BaseService):
             self.get_category_by_id(parent_id)
         try:
             category_id = self.insert_row(
-                'category',
+                table_name='category',
                 title=category_data['title'],
                 parent_id=category_data.get('parent_id'),
                 user_id=user_id,

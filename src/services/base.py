@@ -22,13 +22,13 @@ class BaseService:
             select_query += f' ORDER BY {order_by}'
         return select_query
 
-    def select_row(self, table_name, where, equals_to, order_by=False, **fields):
+    def select_row(self, fields, table_name, where, equals_to, order_by=False):
         select_query = self.make_select_query(fields, table_name, where, order_by)
         cur = self.connection.execute(select_query, (equals_to,),)
         row = cur.fetchone()
         return row
 
-    def select_rows(self, table_name, where, equals_to, order_by=False, **fields):
+    def select_rows(self, fields, table_name, where, equals_to, order_by=False):
         select_query = self.make_select_query(fields, table_name, where, order_by)
         cur = self.connection.execute(select_query, (equals_to,), )
         rows = cur.fetchall()
