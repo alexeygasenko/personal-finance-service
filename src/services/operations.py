@@ -38,7 +38,7 @@ class OperationsService(BaseService):
             raise BrokenRulesError('Missing type.')
         if not operation_data.get('amount'):
             raise BrokenRulesError('Missing amount')
-
+        operation_data['amount'] = abs(operation_data['amount'])
         if operation_data.setdefault('category_id', None) is not None:
             service = CategoriesService(self.connection)
             try:
@@ -49,7 +49,7 @@ class OperationsService(BaseService):
         if operation_data['type'] not in ('income', 'expenses'):
             raise BrokenRulesError('Wrong type of operation')
 
-        operation_data['record_date'] = datetime.now(tz=None).isoformat(sep='T')
+        operation_data['record_date'] = datetime.now(tz=None).strftime('%Y-%m-%d %H:%M')
         operation_data.setdefault('operation_date', operation_data['record_date'])
         operation_data.setdefault('description', None)
 
