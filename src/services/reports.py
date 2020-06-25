@@ -1,4 +1,5 @@
 from .base import BaseService
+from .categories import CategoriesService
 from .exceptions import ConflictError, DoesNotExistError, BrokenRulesError
 
 
@@ -7,9 +8,12 @@ class ReportService(BaseService):
         """
         category, from, to, period, page, page_size
         """
-        raw_report = self._get_report(user_id, qs)
+        raw_operations = self._get_report(user_id, qs)
+        operations = self._get_operation_categories(user_id, raw_operations)
 
-        return raw_report
+        report = {'operations': operations}
+
+        return report
 
     def _get_report(self, user_id, qs):
         query = (
@@ -59,4 +63,21 @@ class ReportService(BaseService):
 
         cur = self.connection.execute(query, params)
         rows = cur.fetchall()
-        return [dict(row) for row in rows]
+        raw_operations = [dict(row) for row in rows]
+        return raw_operations
+
+    def _get_operation_categories(self, user_id, raw_operations):
+        categories_service = CategoriesService(self.connection)
+        user_categories = categories_service.get_categories(user_id)
+
+        for operation in raw_operations:
+            operation['categories'] = []
+            categories_ids = [s.lstrip('0') for s in operation['tree_path'].split('.')]
+            for category in user_categories:
+
+                # Отсортированы в верном порядке?
+                if str(category['id']) in categories_ids:
+                    operation['categories'].append(category)
+                    operation.pop('tree_path', None)
+
+        return raw_operations
