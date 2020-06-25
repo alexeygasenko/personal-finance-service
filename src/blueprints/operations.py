@@ -37,7 +37,7 @@ class OperationView(MethodView):
         with db.connection as connection:
             service = OperationsService(connection)
             if not service.is_owner(user['id'], operation_id):
-                return f'Operation with ID {operation_id} does not exist.', HTTPStatus.FORBIDDEN
+                return '', HTTPStatus.FORBIDDEN
             try:
                 operation = service.update_operation(request.json, operation_id)
             except ServiceError as e:

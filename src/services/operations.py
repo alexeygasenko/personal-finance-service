@@ -34,16 +34,20 @@ class OperationsService(BaseService):
 
         operation_data['user_id'] = user['id']
 
-        if not operation_data.get('type') or not operation_data.get('amount'):
-            raise BrokenRulesError(f'Incomplete request.')
+        if not operation_data.get('type'):
+            raise BrokenRulesError('Missing type.')
+        if not operation_data.get('amount'):
+            raise BrokenRulesError('Missing amount')
 
         if operation_data.setdefault('category_id', None) is not None:
-            with db.connection as connection:
-                service = CategoriesService(connection)
+            service = CategoriesService(self.connection)
+            try:
                 service.get_category_by_id(operation_data['category_id'])
+            except DoesNotExistError:
+                raise BrokenRulesError('Wrong id of category')
 
         if operation_data['type'] not in ('income', 'expenses'):
-            raise BrokenRulesError(f'Wrong type of operation')
+            raise BrokenRulesError('Wrong type of operation')
 
         operation_data['record_date'] = datetime.now(tz=None).isoformat(sep='T')
         operation_data.setdefault('operation_date', operation_data['record_date'])
@@ -95,7 +99,7 @@ class OperationsService(BaseService):
         :return: Изменённая операция
         """
         if operation_data.get('type') not in ('income', 'expenses', None):
-            raise BrokenRulesError(f'Wrong type of operation')
+            raise BrokenRulesError('Wrong type of operation')
 
         if operation_data.get('category_id'):
             service_category = CategoriesService(self.connection)
