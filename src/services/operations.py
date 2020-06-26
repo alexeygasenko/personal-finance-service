@@ -38,7 +38,7 @@ class OperationsService(BaseService):
             raise BrokenRulesError('Missing type.')
         if not operation_data.get('amount'):
             raise BrokenRulesError('Missing amount')
-        operation_data['amount'] = abs(operation_data['amount'])
+
         if operation_data.setdefault('category_id', None) is not None:
             service = CategoriesService(self.connection)
             try:
@@ -48,6 +48,7 @@ class OperationsService(BaseService):
 
         if operation_data['type'] not in ('income', 'expenses'):
             raise BrokenRulesError('Wrong type of operation')
+        self.check_amount(operation_data)
 
         operation_data['record_date'] = datetime.now(tz=None).strftime('%Y-%m-%d %H:%M')
         operation_data.setdefault('operation_date', operation_data['record_date'])
@@ -98,12 +99,21 @@ class OperationsService(BaseService):
 
         :return: Изменённая операция
         """
-        if operation_data.get('type') not in ('income', 'expenses', None):
-            raise BrokenRulesError('Wrong type of operation')
+
+        old_operation = self.get_operation(operation_id)
+
+        if operation_data.get('type'):
+            if operation_data['type'] not in ('income', 'expenses'):
+                raise BrokenRulesError('Wrong type of operation')
+            if operation_data['type'] != old_operation['type']:
+                operation_data.setdefault('amount', -old_operation['amount'])
+                print(old_operation['amount'])
+            self.check_amount(operation_data)
 
         if operation_data.get('category_id'):
             service_category = CategoriesService(self.connection)
             service_category.get_category_by_id(operation_data['category_id'])
+
         self.update_row(
             table_name='operation',
             where='id',
@@ -124,6 +134,15 @@ class OperationsService(BaseService):
             'WHERE id = ?',
             (operation_id,),
         )
+
+    @classmethod
+    def check_amount(cls, operation):
+        if operation['type'] == 'income':
+            if operation['amount'] < 0:
+                raise BrokenRulesError('Income must be > 0')
+        if operation['type'] == 'expenses':
+            if operation['amount'] > 0:
+                raise BrokenRulesError('Expenses must be < 0')
 
     def is_owner(self, user_id, operation_id):
         """
