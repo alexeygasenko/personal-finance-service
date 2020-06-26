@@ -5,7 +5,6 @@ from .exceptions import (
     DoesNotExistError,
     BrokenRulesError
 )
-from database import db
 
 
 class OperationsService(BaseService):
@@ -50,12 +49,17 @@ class OperationsService(BaseService):
             raise BrokenRulesError('Wrong type of operation')
         self.check_amount(operation_data)
 
-        operation_data['record_date'] = datetime.now(tz=None).strftime('%Y-%m-%d %H:%M')
-        operation_data.setdefault('operation_date', operation_data['record_date'])
+        date_format = self.get_format_of_date()
+        operation_data['record_date'] = datetime.now(tz=None).strftime(date_format)
+        if operation_data.get('operation_date') is None:
+            operation_data['operation_date'] = operation_data['record_date']
+        else:
+            self.format_date(operation_data, date_format)
+
         operation_data.setdefault('description', None)
 
-        operation_data['id'] = self._create_operation(operation_data)
-        return operation_data
+        operation_id = self._create_operation(operation_data)
+        return self.get_operation(operation_id)
 
     def get_operation(self, operation_id):
         """
@@ -107,12 +111,15 @@ class OperationsService(BaseService):
                 raise BrokenRulesError('Wrong type of operation')
             if operation_data['type'] != old_operation['type']:
                 operation_data.setdefault('amount', -old_operation['amount'])
-                print(old_operation['amount'])
             self.check_amount(operation_data)
 
         if operation_data.get('category_id'):
             service_category = CategoriesService(self.connection)
             service_category.get_category_by_id(operation_data['category_id'])
+
+        if operation_data.get('operation_date'):
+            date_format = self.get_format_of_date()
+            self.format_date(operation_data, date_format)
 
         self.update_row(
             table_name='operation',
@@ -137,12 +144,32 @@ class OperationsService(BaseService):
 
     @classmethod
     def check_amount(cls, operation):
+        """
+        Проверяет совбадение типа и суммы операции
+
+        :param operation:
+        :return:
+        """
         if operation['type'] == 'income':
             if operation['amount'] < 0:
                 raise BrokenRulesError('Income must be > 0')
         if operation['type'] == 'expenses':
             if operation['amount'] > 0:
                 raise BrokenRulesError('Expenses must be < 0')
+
+    @classmethod
+    def get_format_of_date(cls):
+        return '%Y-%m-%d %H:%M'
+
+    @classmethod
+    def format_date(cls, operation, date_format):
+        try:
+            operation['operation_date'] = datetime.strptime(
+                operation['operation_date'],
+                date_format
+            )
+        except ValueError:
+            raise BrokenRulesError('Wrong format of date. He`s must be %Y-%m-%d %H:%M')
 
     def is_owner(self, user_id, operation_id):
         """
