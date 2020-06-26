@@ -8,7 +8,13 @@ from .categories import CategoriesService
 
 class ReportService(BaseService):
     def get_report(self, user_id, qs):
-        raw_operations, total_items, total_pages = self._get_report(user_id, qs)
+        """
+        Получение отчета
+        :param user_id: id пользователя
+        :param qs: query string
+        :return: Отчет
+        """
+        raw_operations, total_items, total_pages = self._get_raw_operations(user_id, qs)
         if not raw_operations:
             operations = {
                 'operations': [],
@@ -31,7 +37,13 @@ class ReportService(BaseService):
 
         return report
 
-    def _get_report(self, user_id, qs):
+    def _get_raw_operations(self, user_id, qs):
+        """
+        Получение операций (без категорий)
+        :param user_id: id пользователя
+        :param qs: query string
+        :return: Операции, их количество и количество страниц, которое они занимают
+        """
         query = (
             'SELECT'
             ' operation.id,'
@@ -99,6 +111,12 @@ class ReportService(BaseService):
         return raw_operations, total_items, total_pages
 
     def _get_operation_categories(self, user_id, raw_operations):
+        """
+        Получение категорий для заданных операций
+        :param user_id: id пользователя
+        :param raw_operations: Операции
+        :return: Список операций со включенными категориями
+        """
         categories_service = CategoriesService(self.connection)
         user_categories = {
             category['id']: {
@@ -121,6 +139,10 @@ class ReportService(BaseService):
         return raw_operations
 
     def _convert_time_period(self, qs):
+        """
+        Конвертация временного промежутка внутри query string
+        :param qs: query string
+        """
         period = qs.get('period')
         if not period:
             return

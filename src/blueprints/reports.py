@@ -14,6 +14,11 @@ from services.reports import ReportService
 class ReportView(MethodView):
     @auth_required(pass_user=True)
     def get(self, user):
+        """
+        Получение отчета по операциям
+        :param user: Пользователь
+        :return: Отчет
+        """
         qs = dict(request.args)
         with db.connection as connection:
             service = ReportService(connection)
@@ -21,7 +26,7 @@ class ReportView(MethodView):
                 report = service.get_report(user['id'], qs)
             except ServiceError as e:
                 return e.error, e.code
-            return jsonify(report)
+            return report
 
 
 bp = Blueprint('reports', __name__)
