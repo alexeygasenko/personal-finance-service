@@ -21,7 +21,7 @@ class OperationsView(MethodView):
         with db.connection as connection:
             service = OperationsService(connection)
             try:
-                operation = service.create_operation(request.json, user)
+                operation = service.create_operation(user, request.json)
             except ServiceError as e:
                 connection.rollback()
                 return e.error, e.code
@@ -39,7 +39,7 @@ class OperationView(MethodView):
             if not service.is_owner(user['id'], operation_id):
                 return '', HTTPStatus.FORBIDDEN
             try:
-                operation = service.update_operation(request.json, operation_id)
+                operation = service.update_operation(operation_id, request.json)
             except ServiceError as e:
                 connection.rollback()
                 return e.error, e.code
