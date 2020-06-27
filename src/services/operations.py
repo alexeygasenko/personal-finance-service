@@ -143,6 +143,8 @@ class OperationsService(BaseService):
             date_format = get_date_format()
             format_date(operation_data, date_format)
 
+        operation_data.setdefault('description', old_operation['description'])
+
         self.update_row(
             table_name='operation',
             where='id',
