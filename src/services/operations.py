@@ -72,7 +72,7 @@ class OperationsService(BaseService):
                 raise BrokenRulesError(f'Category with id {category_id} does not exist.')
 
         if operation_data['type'] not in ('income', 'expenses'):
-            raise BrokenRulesError('Wrong type of the operation.')
+            raise BrokenRulesError('Wrong operation type.')
         check_amount(operation_data)
 
         date_format = get_date_format()
@@ -129,7 +129,7 @@ class OperationsService(BaseService):
 
         if operation_data.get('type'):
             if operation_data['type'] not in ('income', 'expenses'):
-                raise BrokenRulesError('Wrong type of operation')
+                raise BrokenRulesError('Wrong operation type.')
             if operation_data['type'] != old_operation['type']:
                 operation_data.setdefault('amount', -old_operation['amount'])
             check_amount(operation_data)
