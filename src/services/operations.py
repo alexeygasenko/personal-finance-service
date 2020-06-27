@@ -85,9 +85,9 @@ class OperationsService(BaseService):
         operation_data.setdefault('description', None)
 
         operation_id = self._create_operation(operation_data)
-        return self.get_operation(operation_id)
+        return self.get_operation_by_id(operation_id)
 
-    def get_operation(self, operation_id):
+    def get_operation_by_id(self, operation_id):
         """
         Получение операции по её id
         :param operation_id: id операции
@@ -109,11 +109,9 @@ class OperationsService(BaseService):
             equals_to=operation_id,
             fields=fields
         )
-        operation = {
-            key: row[key]
-            for key in row.keys()
-            if row[key] is not None
-        }
+        if row is None:
+            raise DoesNotExistError(f'Operation with id {operation_id} does not exist.')
+        operation = dict(row)
         return operation
 
     def update_operation(self, operation_id, operation_data):
@@ -125,7 +123,10 @@ class OperationsService(BaseService):
         :param operation_id: id изменяемой операции
         :return: Изменённая операция
         """
-        old_operation = self.get_operation(operation_id)
+        try:
+            old_operation = self.get_operation_by_id(operation_id)
+        except DoesNotExistError:
+            raise BrokenRulesError(f'Operation with id {operation_id} does not exist.')
 
         if operation_data.get('type'):
             if operation_data['type'] not in ('income', 'expenses'):
@@ -148,7 +149,7 @@ class OperationsService(BaseService):
             equals_to=operation_id,
             **operation_data
         )
-        return self.get_operation(operation_id)
+        return self.get_operation_by_id(operation_id)
 
     def delete_operation(self, operation_id):
         """
@@ -156,7 +157,7 @@ class OperationsService(BaseService):
         :param operation_id: id операции
         """
         try:
-            self.get_operation(operation_id)
+            self.get_operation_by_id(operation_id)
         except DoesNotExistError:
             raise BrokenRulesError(f'operation with id {operation_id} does not exist.')
         self.connection.execute(
@@ -173,10 +174,11 @@ class OperationsService(BaseService):
         :return: true/false - является или нет
         """
         cur = self.connection.execute(
-            'SELECT user_id '
+            'SELECT (user.id = ?) AS is_owner '
             'FROM operation '
-            'WHERE id = ?',
-            (operation_id,),
+            'INNER JOIN user ON user.id = operation.user_id '
+            'WHERE operation.id = ?',
+            (user_id, operation_id,),
         )
         row = cur.fetchone()
-        return row is not None and (row['user_id']) == user_id
+        return row is None or bool(row['is_owner'])
