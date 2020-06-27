@@ -74,7 +74,7 @@ class CategoriesService(BaseService):
                 parent_path = self._get_category_path(category_data['parent_id'])
             except DoesNotExistError:
                 self.connection.rollback()
-                raise BrokenRulesError(f'Parent category does not exist.')
+                raise BrokenRulesError('Parent category does not exist.')
 
         """
         tree_path нужен для того, чтобы хранить путь от корневой категории до текущей в виде дерева.
@@ -157,7 +157,10 @@ class CategoriesService(BaseService):
         :return: Измененная категория
         """
         if 'parent_id' in category_data:
-            category = self.get_category_by_id(category_id)
+            try:
+                category = self.get_category_by_id(category_id)
+            except DoesNotExistError:
+                raise BrokenRulesError(f'Category with id {category_id} does not exist.')
             old_parent_id = category['parent_id']
             new_parent_id = category_data['parent_id']
 
@@ -165,7 +168,10 @@ class CategoriesService(BaseService):
                 current_node = str(category_id).zfill(8)
                 old_path = category['tree_path']
                 if new_parent_id is not None:
-                    new_parent = self.get_category_by_id(new_parent_id)
+                    try:
+                        new_parent = self.get_category_by_id(new_parent_id)
+                    except DoesNotExistError:
+                        raise BrokenRulesError(f'Category with id {new_parent_id} does not exist.')
                     new_path = new_parent['tree_path'] + '.' + current_node
                 else:
                     new_path = current_node
@@ -193,7 +199,10 @@ class CategoriesService(BaseService):
         Удаление категории и её потомков
         :param category_id: id категории
         """
-        tree_path = self._get_category_path(category_id)
+        try:
+            tree_path = self._get_category_path(category_id)
+        except DoesNotExistError:
+            raise BrokenRulesError(f'Category with id {category_id} does not exist.')
         self._delete_category(tree_path)
 
     def _delete_category(self, tree_path):
