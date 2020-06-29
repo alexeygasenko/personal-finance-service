@@ -34,7 +34,7 @@ class BaseService:
         return row
 
     def select_rows(self, fields, table_name, where, equals_to, order_by=False):
-        select_query = self.make_select_query(fields, table_name, where, order_by)
+        select_query = self.make_select_query(fields, table_name, where, order_by, where_and=None, and_equals_to=None)
         cur = self.connection.execute(select_query, (equals_to,), )
         rows = cur.fetchall()
         return rows
