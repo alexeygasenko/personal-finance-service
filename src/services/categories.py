@@ -41,15 +41,17 @@ class CategoriesService(BaseService):
         return tree_path
 
     def get_category_by_user_id(self, user_id, category_id):
-        cur = self.connection.execute(
-            'SELECT id, title, parent_id, user_id, tree_path '
-            'FROM category '
-            'WHERE user_id = ? AND category.id = ?',
-            (user_id, category_id),
+        fields = ['id', 'title', 'parent_id', 'user_id', 'tree_path']
+        row = self.select_row(
+            fields,
+            table_name='category',
+            where='user_id',
+            equals_to=user_id,
+            where_and='category.id',
+            and_equals_to=category_id,
         )
-        row = cur.fetchone()
         if row is None:
-            raise DoesNotExistError(f'Category with id {category_id} does not exist.')
+            raise DoesNotExistError(f'Category with id {category_id} does not exist for that user.')
         category = dict(row)
         return category
 
@@ -116,7 +118,7 @@ class CategoriesService(BaseService):
         """
         parent_id = category_data['parent_id']
         if parent_id is not None:
-            self.get_category_by_id(parent_id)
+            self.get_category_by_user_id(user_id, parent_id)
         try:
             category_id = self.insert_row(
                 table_name='category',
