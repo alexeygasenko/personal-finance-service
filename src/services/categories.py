@@ -40,6 +40,19 @@ class CategoriesService(BaseService):
         tree_path = row['tree_path']
         return tree_path
 
+    def get_category_by_user_id(self, user_id, category_id):
+        cur = self.connection.execute(
+            'SELECT id, title, parent_id, user_id, tree_path '
+            'FROM category '
+            'WHERE user_id = ? AND category.id = ?',
+            (user_id, category_id),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise DoesNotExistError(f'Category with id {category_id} does not exist.')
+        category = dict(row)
+        return category
+
     def get_category_by_id(self, category_id):
         """
         Получение категории по её id

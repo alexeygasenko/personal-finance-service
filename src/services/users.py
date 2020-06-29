@@ -1,12 +1,20 @@
 import sqlite3
 
+from validate_email import validate_email
 from werkzeug.security import generate_password_hash
 
 from .base import BaseService
 from .exceptions import (
     ConflictError,
     DoesNotExistError,
+    BrokenRulesError,
+    BadRequest
 )
+
+
+def check_password_length(password):
+    if len(password) < 8:
+        raise BrokenRulesError('Password must be at least 8 characters long.')
 
 
 class UsersService(BaseService):
@@ -50,6 +58,17 @@ class UsersService(BaseService):
         :param user_data: Информация о пользователе (email, имя, пароль)
         :return: id созданного пользователя
         """
+        if not user_data.get('email'):
+            raise BadRequest('Email is required.')
+
+        is_valid = validate_email(email_address=str(user_data.get('email')), check_regex=True, check_mx=False)
+        if not is_valid:
+            raise BrokenRulesError('Email is not valid.')
+
+        if not user_data.get('password'):
+            raise BadRequest('Password is required.')
+        check_password_length(user_data.get('password'))
+
         user_data['password'] = generate_password_hash(user_data['password'])
         try:
             user_id = self.insert_row(

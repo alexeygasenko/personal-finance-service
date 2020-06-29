@@ -51,7 +51,7 @@ class OperationView(MethodView):
     def delete(self, operation_id, user):
         with db.connection as connection:
             service = OperationsService(connection)
-            if not service.is_owner(user, operation_id):
+            if not service.is_owner(user['id'], operation_id):
                 return '', HTTPStatus.FORBIDDEN
             try:
                 service.delete_operation(operation_id)

@@ -67,9 +67,9 @@ class OperationsService(BaseService):
             category_id = operation_data['category_id']
             try:
                 service = CategoriesService(self.connection)
-                service.get_category_by_id(category_id)
+                service.get_category_by_user_id(user['id'], category_id)
             except DoesNotExistError:
-                raise BrokenRulesError(f'Category with id {category_id} does not exist.')
+                raise BrokenRulesError(f'Category with id {category_id} does not exist for that user.')
 
         if operation_data['type'] not in ('income', 'expenses'):
             raise BrokenRulesError('Wrong operation type.')
@@ -159,7 +159,7 @@ class OperationsService(BaseService):
         try:
             self.get_operation_by_id(operation_id)
         except DoesNotExistError:
-            raise BrokenRulesError(f'operation with id {operation_id} does not exist.')
+            raise BrokenRulesError(f'Operation with id {operation_id} does not exist.')
         self.connection.execute(
             'DELETE FROM operation '
             'WHERE id = ?',

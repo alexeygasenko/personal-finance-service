@@ -20,4 +20,5 @@ class BrokenRulesError(ServiceError):
     code = 422
 
 
-
+class BadRequest(ServiceError):
+    code = 400

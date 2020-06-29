@@ -25,7 +25,6 @@ class ReportService(BaseService):
             return operations
 
         total_amount = raw_operations[0]['total_amount']
-
         operations = self._get_operation_categories(user_id, raw_operations)
 
         report = {
