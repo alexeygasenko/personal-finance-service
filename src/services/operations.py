@@ -114,7 +114,7 @@ class OperationsService(BaseService):
         operation = dict(row)
         return operation
 
-    def update_operation(self, operation_id, operation_data):
+    def update_operation(self, user_id, operation_id, operation_data):
         """
         Обновляет данные у существующей операции
         :param operation_data: информация, на которую будет заменены поля, которые были отправлены
@@ -136,8 +136,8 @@ class OperationsService(BaseService):
             check_amount(operation_data)
 
         if operation_data.get('category_id'):
-            service_category = CategoriesService(self.connection)
-            service_category.get_category_by_id(operation_data['category_id'])
+            service = CategoriesService(self.connection)
+            service.get_category_by_user_id(user_id, operation_data['category_id'])
 
         if operation_data.get('operation_date'):
             date_format = get_date_format()

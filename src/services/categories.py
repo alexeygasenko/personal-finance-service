@@ -164,7 +164,7 @@ class CategoriesService(BaseService):
         row = cur.fetchone()
         return row is None or bool(row['is_owner'])
 
-    def update_category(self, category_id, category_data):
+    def update_category(self, user_id, category_id, category_data):
         """
         Изменение категории
         :param category_id: id категории
@@ -173,9 +173,9 @@ class CategoriesService(BaseService):
         """
         if 'parent_id' in category_data:
             try:
-                category = self.get_category_by_id(category_id)
+                category = self.get_category_by_user_id(user_id, category_data['parent_id'])
             except DoesNotExistError:
-                raise BrokenRulesError(f'Category with id {category_id} does not exist.')
+                raise BrokenRulesError(f'Category with id {category_id} does not exist for that user.')
             old_parent_id = category['parent_id']
             new_parent_id = category_data['parent_id']
 
