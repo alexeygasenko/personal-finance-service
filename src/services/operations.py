@@ -20,16 +20,9 @@ def check_amount(operation_type, amount):
         raise BrokenRulesError('Expenses must be < 0.')
 
 
-def get_date_format():
-    return '%Y-%m-%dT%H:%M:%S.%f'
-
-
-def format_date(operation, date_format):
+def format_date(operation):
     try:
-        operation['operation_date'] = datetime.strptime(
-            operation['operation_date'],
-            date_format
-        )
+        operation['operation_date'] = datetime.fromisoformat(operation['operation_date'])
     except ValueError:
         raise BrokenRulesError('Wrong date format. It must be %Y-%m-%dT%H:%M:%S.%f')
 
@@ -62,12 +55,9 @@ class OperationsService(BaseService):
             raise BrokenRulesError('Wrong operation type.')
         check_amount(operation_data['type'], operation_data['amount'])
 
-        date_format = get_date_format()
         operation_data['record_date'] = datetime.now().isoformat()
         if operation_data.get('operation_date') is None:
             operation_data['operation_date'] = operation_data['record_date']
-        else:
-            format_date(operation_data, date_format)
 
         operation_data.setdefault('description', None)
 
@@ -138,10 +128,6 @@ class OperationsService(BaseService):
         if operation_data.get('category_id'):
             service = CategoriesService(self.connection)
             service.get_category_by_user_id(user_id, operation_data['category_id'])
-
-        if operation_data.get('operation_date'):
-            date_format = get_date_format()
-            format_date(operation_data, date_format)
 
         self.update_row(
             table_name='operation',
