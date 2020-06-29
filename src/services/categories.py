@@ -57,7 +57,7 @@ class CategoriesService(BaseService):
             and_equals_to=category_id,
         )
         if row is None:
-            raise DoesNotExistError(f'Category with id {category_id} does not exist for that user.')
+            raise DoesNotExistError(f'Category with id {category_id} does not exist.')
         category = dict(row)
         return category
 
@@ -134,7 +134,7 @@ class CategoriesService(BaseService):
                 tree_path=''
             )
         except sqlite3.IntegrityError:
-            raise ConflictError(f'Category with name {category_data["title"]} already exists for that user.')
+            raise ConflictError(f'Category with name {category_data["title"]} already exists.')
         self.connection.commit()
         return category_id
 
@@ -182,7 +182,7 @@ class CategoriesService(BaseService):
             try:
                 category = self.get_category_by_user_id(user_id, category_id)
             except DoesNotExistError:
-                raise BrokenRulesError(f'Category with id {category_id} does not exist for that user.')
+                raise BrokenRulesError(f'Category with id {category_id} does not exist.')
             old_parent_id = category['parent_id']
             new_parent_id = category_data['parent_id']
             if category_id == new_parent_id:
