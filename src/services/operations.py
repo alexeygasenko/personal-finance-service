@@ -20,9 +20,9 @@ def check_amount(operation_type, amount):
         raise BrokenRulesError('Expenses must be < 0.')
 
 
-def format_date(operation):
+def validate_date(operation):
     try:
-        operation['operation_date'] = datetime.fromisoformat(operation['operation_date'])
+        operation['operation_date'] = datetime.fromisoformat(operation['operation_date']).isoformat()
     except ValueError:
         raise BrokenRulesError('Wrong date format. It must be %Y-%m-%dT%H:%M:%S.%f')
 
@@ -54,10 +54,12 @@ class OperationsService(BaseService):
         if operation_data['type'] not in ('income', 'expenses'):
             raise BrokenRulesError('Wrong operation type.')
         check_amount(operation_data['type'], operation_data['amount'])
+        operation_data['amount'] = int(operation_data['amount'] * 100)
 
         operation_data['record_date'] = datetime.now().isoformat()
         if operation_data.get('operation_date') is None:
             operation_data['operation_date'] = operation_data['record_date']
+        validate_date(operation_data)
 
         operation_data.setdefault('description', None)
 
@@ -101,6 +103,7 @@ class OperationsService(BaseService):
         if row is None:
             raise DoesNotExistError(f'Operation with id {operation_id} does not exist.')
         operation = dict(row)
+        operation['amount'] /= 100
         return operation
 
     def update_operation(self, user_id, operation_id, operation_data):
@@ -124,10 +127,14 @@ class OperationsService(BaseService):
             if operation_data['type'] != old_operation['type']:
                 operation_data.setdefault('amount', -old_operation['amount'])
             check_amount(operation_data['type'], operation_data['amount'])
+            operation_data['amount'] = int(operation_data['amount'] * 100)
 
         if operation_data.get('category_id'):
             service = CategoriesService(self.connection)
             service.get_category_by_user_id(user_id, operation_data['category_id'])
+
+        if operation_data.get('operation_date'):
+            validate_date(operation_data)
 
         self.update_row(
             table_name='operation',
