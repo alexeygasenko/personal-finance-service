@@ -205,6 +205,7 @@ class CategoriesService(BaseService):
 
         self._update_category(category_id, **category_data)
         category = self.get_category_by_id(category_id)
+        category.pop('tree_path')
         return category
 
     def _update_tree_path_prefix(self, old_prefix, new_prefix):
