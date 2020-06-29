@@ -8,17 +8,16 @@ from .exceptions import (
 )
 
 
-def check_amount(operation):
+def check_amount(operation_type, amount):
     """
     Проверяет совпадение типа и суммы операции
-    :param operation: Операция
+    :param operation_type: Тип операции
+    :param amount: Сумма
     """
-    if operation['type'] == 'income':
-        if operation['amount'] < 0:
-            raise BrokenRulesError('Income must be > 0.')
-    if operation['type'] == 'expenses':
-        if operation['amount'] > 0:
-            raise BrokenRulesError('Expenses must be < 0.')
+    if operation_type == 'income' and amount < 0:
+        raise BrokenRulesError('Income must be > 0.')
+    if operation_type == 'expenses' and amount > 0:
+        raise BrokenRulesError('Expenses must be < 0.')
 
 
 def get_date_format():
@@ -36,18 +35,6 @@ def format_date(operation, date_format):
 
 
 class OperationsService(BaseService):
-    def _create_operation(self, operation_data):
-        """
-        Добавление операции в базу данных операции
-        :param operation_data: данные об операции
-        :return: id добавленной операции
-        """
-        operation_id = self.insert_row(
-            table_name='operation',
-            **operation_data
-        )
-        return operation_id
-
     def create_operation(self, user, operation_data):
         """
         Создание операции
@@ -73,7 +60,7 @@ class OperationsService(BaseService):
 
         if operation_data['type'] not in ('income', 'expenses'):
             raise BrokenRulesError('Wrong operation type.')
-        check_amount(operation_data)
+        check_amount(operation_data['type'], operation_data['amount'])
 
         date_format = get_date_format()
         operation_data['record_date'] = datetime.now().isoformat()
@@ -86,6 +73,18 @@ class OperationsService(BaseService):
 
         operation_id = self._create_operation(operation_data)
         return self.get_operation_by_id(operation_id)
+
+    def _create_operation(self, operation_data):
+        """
+        Добавление операции в базу данных операции
+        :param operation_data: данные об операции
+        :return: id добавленной операции
+        """
+        operation_id = self.insert_row(
+            table_name='operation',
+            **operation_data
+        )
+        return operation_id
 
     def get_operation_by_id(self, operation_id):
         """
@@ -121,6 +120,7 @@ class OperationsService(BaseService):
             (тип(если есть), сумма(если есть), описание(если есть), id категории(если есть), дата
             произведения операции)
         :param operation_id: id изменяемой операции
+        :param user_id: id пользователя
         :return: Изменённая операция
         """
         try:
@@ -133,7 +133,7 @@ class OperationsService(BaseService):
                 raise BrokenRulesError('Wrong operation type.')
             if operation_data['type'] != old_operation['type']:
                 operation_data.setdefault('amount', -old_operation['amount'])
-            check_amount(operation_data)
+            check_amount(operation_data['type'], operation_data['amount'])
 
         if operation_data.get('category_id'):
             service = CategoriesService(self.connection)

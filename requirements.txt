@@ -1,8 +1,12 @@
 click==7.1.2
+dnspython==1.16.0
+filelock==3.0.12
 Flask==1.1.2
+idna==2.10
 itsdangerous==1.1.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
+py3-validate-email==0.2.9
 python-dateutil==2.8.1
 python-dotenv==0.13.0
 six==1.15.0
