@@ -40,6 +40,27 @@ class CategoriesService(BaseService):
         tree_path = row['tree_path']
         return tree_path
 
+    def get_category_by_user_id(self, user_id, category_id):
+        """
+        Получение категории по её id и id пользователя
+        :param user_id: id пользователя
+        :param category_id: id категории
+        :return: Категория
+        """
+        fields = ['id', 'title', 'parent_id', 'user_id', 'tree_path']
+        row = self.select_row(
+            fields,
+            table_name='category',
+            where='user_id',
+            equals_to=user_id,
+            where_and='category.id',
+            and_equals_to=category_id,
+        )
+        if row is None:
+            raise DoesNotExistError(f'Category with id {category_id} does not exist for that user.')
+        category = dict(row)
+        return category
+
     def get_category_by_id(self, category_id):
         """
         Получение категории по её id
@@ -103,7 +124,7 @@ class CategoriesService(BaseService):
         """
         parent_id = category_data['parent_id']
         if parent_id is not None:
-            self.get_category_by_id(parent_id)
+            self.get_category_by_user_id(user_id, parent_id)
         try:
             category_id = self.insert_row(
                 table_name='category',
@@ -149,20 +170,23 @@ class CategoriesService(BaseService):
         row = cur.fetchone()
         return row is None or bool(row['is_owner'])
 
-    def update_category(self, category_id, category_data):
+    def update_category(self, user_id, category_id, category_data):
         """
         Изменение категории
+        :param user_id: id пользователя
         :param category_id: id категории
         :param category_data: Информация об изменяемой категории (имя (если есть), id родителя (если есть))
         :return: Измененная категория
         """
         if 'parent_id' in category_data:
             try:
-                category = self.get_category_by_id(category_id)
+                category = self.get_category_by_user_id(user_id, category_id)
             except DoesNotExistError:
-                raise BrokenRulesError(f'Category with id {category_id} does not exist.')
+                raise BrokenRulesError(f'Category with id {category_id} does not exist for that user.')
             old_parent_id = category['parent_id']
             new_parent_id = category_data['parent_id']
+            if category_id == new_parent_id:
+                raise BrokenRulesError('Category id and parent id must be different.')
 
             if old_parent_id != new_parent_id:
                 current_node = str(category_id).zfill(8)
@@ -172,6 +196,8 @@ class CategoriesService(BaseService):
                         new_parent = self.get_category_by_id(new_parent_id)
                     except DoesNotExistError:
                         raise BrokenRulesError(f'Category with id {new_parent_id} does not exist.')
+                    if current_node in new_parent['tree_path']:
+                        raise BrokenRulesError('Categories must not create cycles.')
                     new_path = new_parent['tree_path'] + '.' + current_node
                 else:
                     new_path = current_node
@@ -183,9 +209,9 @@ class CategoriesService(BaseService):
 
     def _update_tree_path_prefix(self, old_prefix, new_prefix):
         """
-        Обновляем пути категорий
+        Обновление пути категорий
         :param old_prefix: Старый префикс пути
-        :param new_prefix: Новй префикс пути
+        :param new_prefix: Новый префикс пути
         """
         self.connection.execute(
             'UPDATE category '

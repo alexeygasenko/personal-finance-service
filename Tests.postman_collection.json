@@ -764,7 +764,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"type\": \"expenses\",\r\n    \"amount\": -300,\r\n    \"description\": \"Food\",\r\n    \"category_id\": null,\r\n    \"operation_date\": \"2020-06-27T20:36:30.014395\"\r\n}\r\n",
+									"raw": "{\r\n    \"type\": \"expenses\",\r\n    \"amount\": -300,\r\n    \"description\": \"Food\",\r\n    \"category_id\": 1,\r\n    \"operation_date\": \"2012-04-23T18:25:43.000000\"\r\n}\r\n",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1288,6 +1288,7 @@
 								{
 									"key": "period",
 									"value": "week",
+									"description": "Подробное описание временных промежутков в ТЗ.",
 									"disabled": true
 								},
 								{

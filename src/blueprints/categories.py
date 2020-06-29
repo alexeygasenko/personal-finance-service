@@ -57,7 +57,7 @@ class CategoryView(MethodView):
             if not service.is_owner(user['id'], category_id):
                 return '', HTTPStatus.FORBIDDEN
             try:
-                category = service.update_category(category_id, request.json)
+                category = service.update_category(user['id'], category_id, request.json)
             except ServiceError as e:
                 return e.error, e.code
             return category, HTTPStatus.OK

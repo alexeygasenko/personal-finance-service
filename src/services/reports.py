@@ -24,8 +24,7 @@ class ReportService(BaseService):
             }
             return operations
 
-        total_amount = raw_operations[0]['total_amount']
-
+        total_amount = raw_operations[0]['total_amount'] / 100
         operations = self._get_operation_categories(user_id, raw_operations)
 
         report = {
@@ -127,6 +126,7 @@ class ReportService(BaseService):
         }
 
         for operation in raw_operations:
+            operation['amount'] /= 100
             operation['categories'] = []
             if operation['tree_path'] is not None:
                 categories_ids = [int(s.lstrip('0')) for s in operation['tree_path'].split('.')]
