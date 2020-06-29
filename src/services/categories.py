@@ -41,6 +41,12 @@ class CategoriesService(BaseService):
         return tree_path
 
     def get_category_by_user_id(self, user_id, category_id):
+        """
+        Получение категории по её id и id пользователя
+        :param user_id: id пользователя
+        :param category_id: id категории
+        :return: Категория
+        """
         fields = ['id', 'title', 'parent_id', 'user_id', 'tree_path']
         row = self.select_row(
             fields,
